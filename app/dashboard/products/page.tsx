@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, MoreHorizontal, AlertCircle, Edit2, X, PackageOpen } from "lucide-react";
+import { Plus, Search, MoreHorizontal, AlertCircle, Edit2, X, PackageOpen, PlusCircle, ChevronDown, Check } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 interface Product {
@@ -22,7 +22,12 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null); // Added this line
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(["General"]);
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -58,12 +63,28 @@ export default function ProductsPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+      if (res.ok && data.categories) {
+        setCategories(data.categories);
+      }
+    } catch (err) {
+      console.error("Failed to load categories", err);
+    }
+  };
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchProducts();
     }, 300);
     return () => clearTimeout(delayDebounceFn);
   }, [search]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,9 +112,12 @@ export default function ProductsPage() {
 
       toast.success(isEdit ? "Product updated successfully" : "Product added successfully"); // Modified this line
       setIsPanelOpen(false);
-      setEditingId(null); // Added this line
+      setEditingId(null);
       setFormData({ name: "", sku: "", purchasePrice: "", sellingPrice: "", stock: "", minStockLevel: "5", category: "General", shelfNo: "" });
+      setIsAddingNewCategory(false);
+      setNewCategoryName("");
       fetchProducts();
+      fetchCategories();
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     }
@@ -335,21 +359,145 @@ export default function ProductsPage() {
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                     className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-sm font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#714B67]/20 focus:border-[#714B67]"
-                    placeholder="e.g. MOU-1234-56"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
+                <div className={`grid gap-4 ${isAddingNewCategory ? "grid-cols-1" : "grid-cols-2"}`}>
+                  <div className="grid gap-2 relative">
                     <label className="text-sm font-medium text-slate-700">Category</label>
-                    <input
-                      type="text"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-[#E2E8F0] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#714B67]/20 focus:border-[#714B67]"
-                      placeholder="General"
-                    />
+                    {!isAddingNewCategory ? (
+                      <div className="relative">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCategoryDropdownOpen(!isCategoryDropdownOpen);
+                              setCategorySearch("");
+                            }}
+                            className="flex-1 px-3 py-2 bg-white border border-[#E2E8F0] rounded-md text-sm focus:outline-none ring-offset-white cursor-pointer flex items-center justify-between group hover:border-[#714B67] transition-all text-left"
+                          >
+                            <span className={formData.category ? "text-slate-900" : "text-slate-400"}>
+                              {formData.category || "Select Category"}
+                            </span>
+                            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingNewCategory(true);
+                              setCategorySearch("");
+                            }}
+                            className="p-2 border border-[#E2E8F0] rounded-md text-[#714B67] hover:bg-slate-50 transition-colors shrink-0"
+                            title="Add New Category"
+                          >
+                            <PlusCircle className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Custom Dropdown Menu */}
+                        {isCategoryDropdownOpen && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-[60]" 
+                              onClick={() => setIsCategoryDropdownOpen(false)}
+                            />
+                            <div className="absolute top-full left-0 mt-1 w-[calc(100%-48px)] bg-white border border-[#E2E8F0] rounded-lg shadow-xl z-[70] overflow-hidden animate-in fade-in zoom-in duration-200 border-b-2 border-b-[#714B67]/10">
+                              <div className="p-2 bg-slate-50 border-b border-[#E2E8F0]">
+                                <div className="relative">
+                                  <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search categories..."
+                                    value={categorySearch}
+                                    onChange={(e) => setCategorySearch(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-1.5 bg-white border border-[#E2E8F0] rounded-md text-xs focus:outline-none focus:border-[#714B67] transition-all"
+                                    autoFocus
+                                  />
+                                </div>
+                              </div>
+                              <div className="max-h-52 overflow-auto py-1 custom-scrollbar">
+                                {categories.filter(c => c.toLowerCase().includes(categorySearch.toLowerCase())).length > 0 ? (
+                                  categories
+                                    .filter(c => c.toLowerCase().includes(categorySearch.toLowerCase()))
+                                    .map((cat) => (
+                                      <div
+                                        key={cat}
+                                        onClick={() => {
+                                          setFormData({ ...formData, category: cat });
+                                          setIsCategoryDropdownOpen(false);
+                                        }}
+                                        className="px-3 py-2 text-sm text-slate-700 hover:bg-[#714B67]/5 hover:text-[#714B67] cursor-pointer flex items-center justify-between group/item"
+                                      >
+                                        <span>{cat}</span>
+                                        {formData.category === cat ? (
+                                          <Check className="w-3.5 h-3.5 text-[#714B67]" />
+                                        ) : (
+                                          <div className="w-3.5 h-3.5 rounded-full border border-slate-200 group-hover/item:border-[#714B67]/30" />
+                                        )}
+                                      </div>
+                                    ))
+                                ) : (
+                                  <div className="px-3 py-4 text-center">
+                                    <p className="text-xs text-slate-400">No categories found</p>
+                                    <button 
+                                      type="button"
+                                      onClick={() => {
+                                        setIsAddingNewCategory(true);
+                                        setNewCategoryName(categorySearch);
+                                        setFormData({ ...formData, category: categorySearch });
+                                        setIsCategoryDropdownOpen(false);
+                                      }}
+                                      className="mt-2 text-xs font-semibold text-[#714B67] hover:underline"
+                                    >
+                                      + Add "{categorySearch}"
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="border-t border-[#E2E8F0] p-2 bg-slate-50">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsAddingNewCategory(true);
+                                    setIsCategoryDropdownOpen(false);
+                                  }}
+                                  className="w-full py-1.5 text-xs font-semibold text-[#714B67] hover:bg-[#714B67]/10 rounded transition-all border border-dashed border-[#714B67]/30"
+                                >
+                                  + Create New Category
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 animate-in slide-in-from-right-2 duration-200">
+                        <input
+                          type="text"
+                          value={newCategoryName}
+                          onChange={(e) => {
+                            setNewCategoryName(e.target.value);
+                            setFormData({ ...formData, category: e.target.value });
+                          }}
+                          autoFocus
+                          placeholder="Category name"
+                          className="flex-1 px-3 py-2 bg-white border border-[#E2E8F0] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#714B67]/20 focus:border-[#714B67]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingNewCategory(false);
+                            setNewCategoryName("");
+                            setFormData({ ...formData, category: categories[0] || "General" });
+                          }}
+                          className="px-4 py-2 border border-[#E2E8F0] rounded-md text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors shrink-0"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                   </div>
+
                   <div className="grid gap-2">
                     <label className="text-sm font-medium text-slate-700">Shelf No.</label>
                     <input
