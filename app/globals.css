@@ -72,3 +72,61 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  /* Hide every part of the UI by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show ONLY the printable area and its children */
+  .printable-area, 
+  .printable-area * {
+    visibility: visible;
+  }
+
+  /* Position the printable area at the absolute top-left of the physical page */
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Reset body colors and remove page margins imposed by browser defaults where possible */
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide the modal overlay background and blur */
+  .fixed.inset-0 {
+    background: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Prevent page breaks inside the invoice header or rows */
+  .printable-area table tr {
+    page-break-inside: avoid;
+  }
+}
+
+.no-print {
+  @media print {
+    display: none !important;
+  }
+}
+
+.print-only {
+  display: none;
+  @media print {
+    display: block;
+  }
+}

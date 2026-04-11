@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, ShoppingCart } from "lucide-react";
+import { Calendar, ShoppingCart, Download } from "lucide-react";
+import { exportHistoryToCsv } from "@/lib/excel-utils";
 import InvoiceModal from "./InvoiceModal";
 
 export default function SalesHistoryTable({ sales, showCustomer = false }: { sales: any[], showCustomer?: boolean }) {
@@ -9,6 +10,21 @@ export default function SalesHistoryTable({ sales, showCustomer = false }: { sal
 
   return (
     <>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm font-medium text-slate-500">
+          Showing {sales.length} transactions
+        </div>
+        {sales.length > 0 && (
+          <button 
+            onClick={() => exportHistoryToCsv(sales)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#E2E8F0] shadow-sm hover:bg-slate-50 text-[#714B67] rounded-lg text-sm font-semibold transition-all hover:border-[#714B67]/30"
+          >
+            <Download className="w-4 h-4" />
+            Download History
+          </button>
+        )}
+      </div>
+
       <div className="flex-1 overflow-auto bg-white rounded-xl shadow-sm border border-[#E2E8F0]">
         {sales.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
