@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Inventory - Inventory Management",
+  verification: {
+  google: "qAU5AqZYKXhtSiPnvnSH9A7SzKAOo4BYOJht2saAXoo",
+},
   description: "Production-ready inventory app with Next.js, MongoDB, and NextAuth",
 };
 
