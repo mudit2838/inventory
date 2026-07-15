@@ -1,0 +1,18 @@
+# robots.txt for inventiry.vercel.app
+
+User-agent: *
+
+# Allow all public pages
+Allow: /
+Allow: /features
+Allow: /how-it-works
+Allow: /testimonials
+Allow: /login
+Allow: /register
+
+# Block private/protected routes
+Disallow: /dashboard/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://inventiry.vercel.app/sitemap.xml
